@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥔 土豆智能体 - 健康预警测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .warning-selector {
+            margin-bottom: 30px;
+        }
+        
+        .warning-selector label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .warning-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .warning-type-btn {
+            padding: 12px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .warning-type-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .warning-type-btn.active {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-section h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result-section.red {
+            background: #ffebee;
+            border: 3px solid #f44336;
+        }
+        
+        .result-section.yellow {
+            background: #fff8e1;
+            border: 3px solid #ffc107;
+        }
+        
+        .result-section.green {
+            background: #e8f5e9;
+            border: 3px solid #4caf50;
+        }
+        
+        .result-section.normal {
+            background: #e3f2fd;
+            border: 3px solid #2196f3;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-icon {
+            font-size: 48px;
+            margin-right: 20px;
+        }
+        
+        .result-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .result-section.red .result-title {
+            color: #f44336;
+        }
+        
+        .result-section.yellow .result-title {
+            color: #ffc107;
+        }
+        
+        .result-section.green .result-title {
+            color: #4caf50;
+        }
+        
+        .result-section.normal .result-title {
+            color: #2196f3;
+        }
+        
+        .result-details {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .result-item strong {
+            color: #333;
+        }
+        
+        .disclaimer {
+            margin-top: 30px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 2px solid #ffc107;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🥔 土豆智能体</h1>
+            <div class="subtitle">健康预警测试页面（25个预警模型）</div>
+        </div>
+        
+        <!-- 预警类型选择 -->
+        <div class="warning-selector">
+            <label>选择预警类型：</label>
+            <div class="warning-types">
+                <button class="warning-type-btn active" data-type="bp">血压预警</button>
+                <button class="warning-type-btn" data-type="glucose">血糖预警</button>
+                <button class="warning-type-btn" data-type="hr">心率预警</button>
+                <button class="warning-type-btn" data-type="lipid">血脂预警</button>
+                <button class="warning-type-btn" data-type="weight">体重预警</button>
+                <button class="warning-type-btn" data-type="spo2">血氧预警</button>
+                <button class="warning-type-btn" data-type="temp">体温预警</button>
+                <button class="warning-type-btn" data-type="sleep">睡眠预警</button>
+                <button class="warning-type-btn" data-type="exercise">运动预警</button>
+                <button class="warning-type-btn" data-type="nutrition">营养预警</button>
+                <button class="warning-type-btn" data-type="mental">心理预警</button>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="input-section" id="bp-input">
+            <h2>血压数据输入</h2>
+            <div class="input-group">
+                <label>收缩压列表（7天，用逗号分隔）：</label>
+                <input type="text" id="sbp-list" placeholder="例如：125,130,135,140,145,150,155">
+            </div>
+            <div class="input-group">
+                <label>最新收缩压（mmHg）：</label>
+                <input type="number" id="latest-sbp" placeholder="例如：155">
+            </div>
+            <div class="input-group">
+                <label>最新舒张压（mmHg）：</label>
+                <input type="number" id="latest-dbp" placeholder="例如：105">
+            </div>
+            <div class="input-group">
+                <label>早晨最高收缩压（mmHg）：</label>
+                <input type="number" id="morning-max-sbp" placeholder="例如：155">
+            </div>
+            <div class="input-group">
+                <label>夜间最低收缩压（mmHg）：</label>
+                <input type="number" id="night-min-sbp" placeholder="例如：100">
+            </div>
+        </div>
+        
+        <div class="input-section" id="glucose-input" style="display:none;">
+            <h2>血糖数据输入</h2>
+            <div class="input-group">
+                <label>空腹血糖（mmol/L）：</label>
+                <input type="number" id="fasting-glucose" placeholder="例如：7.5">
+            </div>
+            <div class="input-group">
+                <label>餐后血糖（mmol/L）：</label>
+                <input type="number" id="postprandial-glucose" placeholder="例如：12.0">
+            </div>
+            <div class="input-group">
+                <label>HbA1c（%）：</label>
+                <input type="number" id="hba1c" placeholder="例如：7.5">
+            </div>
+        </div>
+        
+        <div class="input-section" id="hr-input" style="display:none;">
+            <h2>心率数据输入</h2>
+            <div class="input-group">
+                <label>静息心率（bpm）：</label>
+                <input type="number" id="resting-hr" placeholder="例如：95">
+            </div>
+            <div class="input-group">
+                <label>运动后1分钟心率恢复（bpm）：</label>
+                <input type="number" id="hr-recovery-1min" placeholder="例如：10">
+            </div>
+            <div class="input-group">
+                <label>心率变异性（ms）：</label>
+                <input type="number" id="hrv" placeholder="例如：15">
+            </div>
+        </div>
+        
+        <div class="input-section" id="lipid-input" style="display:none;">
+            <h2>血脂数据输入</h2>
+            <div class="input-group">
+                <label>LDL-C（mmol/L）：</label>
+                <input type="number" id="ldl-c" placeholder="例如：5.0">
+            </div>
+            <div class="input-group">
+                <label>HDL-C（mmol/L）：</label>
+                <input type="number" id="hdl-c" placeholder="例如：0.8">
+            </div>
+            <div class="input-group">
+                <label>TG（mmol/L）：</label>
+                <input type="number" id="tg" placeholder="例如：2.5">
+            </div>
+        </div>
+        
+        <div class="input-section" id="weight-input" style="display:none;">
+            <h2>体重数据输入</h2>
+            <div class="input-group">
+                <label>BMI（kg/m²）：</label>
+                <input type="number" id="bmi" placeholder="例如：30.0">
+            </div>
+            <div class="input-group">
+                <label>腰围（cm）：</label>
+                <input type="number" id="waist-circumference" placeholder="例如：95">
+            </div>
+            <div class="input-group">
+                <label>体脂率（%）：</label>
+                <input type="number" id="body-fat-percentage" placeholder="例如：35">
+            </div>
+        </div>
+        
+        <!-- 计算按钮 -->
+        <button class="calculate-btn" onclick="calculateWarning()">计算预警</button>
+        
+        <!-- 结果显示 -->
+        <div class="result-section" id="result">
+            <div class="result-header">
+                <div class="result-icon" id="result-icon">🔴</div>
+                <div class="result-title" id="result-title">红色预警</div>
+            </div>
+            <div class="result-details" id="result-details"></div>
+        </div>
+        
+        <!-- 免责声明 -->
+        <div class="disclaimer">
+            ⚠️ 本预警仅供参考，不替代医生诊断。如有疑问，请咨询专业医生。
+            <br><br>
+            循证来源：CDC 2025 / Framingham Heart Study / AHA 2025心血管指南 / 中国血脂管理指南2025 / 中国肥胖管理指南2025
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            🥔 土豆智能体系统 - 健康预警测试页面 v1.0.0
+            <br>
+            Powered by OpenClaw + 纯规则引擎（模型无关）
+        </div>
+    </div>
+    
+    <script>
+        // 预警类型切换
+        const warningTypeBtns = document.querySelectorAll('.warning-type-btn');
+        const inputSections = {
+            'bp': document.getElementById('bp-input'),
+            'glucose': document.getElementById('glucose-input'),
+            'hr': document.getElementById('hr-input'),
+            'lipid': document.getElementById('lipid-input'),
+            'weight': document.getElementById('weight-input'),
+            'spo2': null,
+            'temp': null,
+            'sleep': null,
+            'exercise': null,
+            'nutrition': null,
+            'mental': null
+        };
+        
+        let currentWarningType = 'bp';
+        
+        warningTypeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 移除所有active
+                warningTypeBtns.forEach(b => b.classList.remove('active'));
+                
+                // 添加active
+                this.classList.add('active');
+                
+                // 切换输入区域
+                const type = this.dataset.type;
+                currentWarningType = type;
+                
+                // 隐藏所有输入区域
+                Object.values(inputSections).forEach(section => {
+                    if (section) section.style.display = 'none';
+                });
+                
+                // 显示当前输入区域
+                if (inputSections[type]) {
+                    inputSections[type].style.display = 'block';
+                }
+                
+                // 隐藏结果
+                document.getElementById('result').style.display = 'none';
+            });
+        });
+        
+        // 计算预警
+        function calculateWarning() {
+            let result;
+            
+            if (currentWarningType === 'bp') {
+                result = calculateBloodPressureWarning();
+            } else if (currentWarningType === 'glucose') {
+                result = calculateBloodGlucoseWarning();
+            } else if (currentWarningType === 'hr') {
+                result = calculateHeartRateWarning();
+            } else if (currentWarningType === 'lipid') {
+                result = calculateBloodLipidWarning();
+            } else if (currentWarningType === 'weight') {
+                result = calculateBodyWeightWarning();
+            } else {
+                alert('该预警模型待实现，请选择其他预警类型');
+                return;
+            }
+            
+            displayResult(result);
+        }
+        
+        // 血压预警计算
+        function calculateBloodPressureWarning() {
+            // 获取输入数据
+            const sbpListStr = document.getElementById('sbp-list').value;
+            const latestSbp = parseFloat(document.getElementById('latest-sbp').value) || 0;
+            const latestDbp = parseFloat(document.getElementById('latest-dbp').value) || 0;
+            const morningMaxSbp = parseFloat(document.getElementById('morning-max-sbp').value) || 0;
+            const nightMinSbp = parseFloat(document.getElementById('night-min-sbp').value) || 0;
+            
+            // 解析收缩压列表
+            const sbpList = sbpListStr.split(',').map(s => parseFloat(s.trim()) || 0);
+            
+            // 计算BPV（血压变异性）
+            const bpv = calculateStandardDeviation(sbpList);
+            
+            // BPV评分
+            let bpvScore = 0;
+            if (bpv >= 8.0) bpvScore = 3;
+            else if (bpv >= 6.0) bpvScore = 2;
+            else if (bpv >= 4.0) bpvScore = 1;
+            
+            // 计算PP（脉压差）
+            const pp = latestSbp - latestDbp;
+            
+            // PP评分
+            let ppScore = 0;
+            if (pp >= 60.0) ppScore = 3;
+            else if (pp >= 50.0) ppScore = 2;
+            else if (pp >= 40.0) ppScore = 1;
+            
+            // 计算MH（晨峰高血压）
+            const mh = morningMaxSbp - nightMinSbp;
+            
+            // MH评分
+            let mhScore = 0;
+            if (mh >= 40.0) mhScore = 3;
+            else if (mh >= 30.0) mhScore = 2;
+            else if (mh >= 20.0) mhScore = 1;
+            
+            // 计算总分
+            const totalScore = bpvScore + ppScore + mhScore;
+            
+            // 确定预警级别
+            let warningLevel, recommendation, icon;
+            if (totalScore >= 7) {
+                warningLevel = '红色预警';
+                recommendation = '立即就医，建议进行心血管全面检查';
+                icon = '🔴';
+            } else if (totalScore >= 4) {
+                warningLevel = '黄色预警';
+                recommendation = '调整生活方式，建议增加血压监测频率';
+                icon = '🟡';
+            } else if (totalScore >= 1) {
+                warningLevel = '绿色预警';
+                recommendation = '继续保持，建议定期监测血压';
+                icon = '🟢';
+            } else {
+                warningLevel = '正常';
+                recommendation = '血压控制良好，继续保持健康生活方式';
+                icon = '✅';
+            }
+            
+            return {
+                warningType: '血压预警',
+                warningLevel: warningLevel,
+                totalScore: totalScore,
+                details: [
+                    `BPV（血压变异性）：${bpv.toFixed(2)} mmHg（评分：${bpvScore}分）`,
+                    `PP（脉压差）：${pp.toFixed(2)} mmHg（评分：${ppScore}分）`,
+                    `MH（晨峰高血压）：${mh.toFixed(2)} mmHg（评分：${mhScore}分）`,
+                    `总分：${totalScore}分`
+                ],
+                recommendation: recommendation,
+                icon: icon,
+                evidenceSource: 'Framingham Heart Study'
+            };
+        }
+        
+        // 血糖预警计算
+        function calculateBloodGlucoseWarning() {
+            const fastingGlucose = parseFloat(document.getElementById('fasting-glucose').value) || 0;
+            const postprandialGlucose = parseFloat(document.getElementById('postprandial-glucose').value) || 0;
+            const hba1c = parseFloat(document.getElementById('hba1c').value) || 0;
+            
+            // 空腹血糖评分
+            let fastingScore = 0;
+            if (fastingGlucose >= 7.0) fastingScore = 3;
+            else if (fastingGlucose >= 6.1) fastingScore = 2;
+            else if (fastingGlucose >= 5.6) fastingScore = 1;
+            
+            // 餐后血糖评分
+            let postprandialScore = 0;
+            if (postprandialGlucose >= 11.1) postprandialScore = 3;
+            else if (postprandialGlucose >= 8.0) postprandialScore = 2;
+            else if (postprandialGlucose >= 7.0) postprandialScore = 1;
+            
+            // HbA1c评分
+            let hba1cScore = 0;
+            if (hba1c >= 7.0) hba1cScore = 3;
+            else if (hba1c >= 6.5) hba1cScore = 2;
+            else if (hba1c >= 6.0) hba1cScore = 1;
+            
+            const totalScore = fastingScore + postprandialScore + hba1cScore;
+            
+            let warningLevel, recommendation, icon;
+            if (totalScore >= 7) {
+                warningLevel = '红色预警';
+                recommendation = '立即就医，建议进行全面检查';
+                icon = '🔴';
+            } else if (totalScore >= 4) {
+                warningLevel = '黄色预警';
+                recommendation = '调整生活方式，建议增加监测频率';
+                icon = '🟡';
+            } else if (totalScore >= 1) {
+                warningLevel = '绿色预警';
+                recommendation = '继续保持，建议定期监测';
+                icon = '🟢';
+            } else {
+                warningLevel = '正常';
+                recommendation = '血糖控制良好，继续保持健康生活方式';
+                icon = '✅';
+            }
+            
+            return {
+                warningType: '血糖预警',
+                warningLevel: warningLevel,
+                totalScore: totalScore,
+                details: [
+                    `空腹血糖：${fastingGlucose} mmol/L（评分：${fastingScore}分）`,
+                    `餐后血糖：${postprandialGlucose} mmol/L（评分：${postprandialScore}分）`,
+                    `HbA1c：${hba1c}%（评分：${hba1cScore}分）`,
+                    `总分：${totalScore}分`
+                ],
+                recommendation: recommendation,
+                icon: icon,
+                evidenceSource: 'CDC 2025糖尿病指南'
+            };
+        }
+        
+        // 心率预警计算
+        function calculateHeartRateWarning() {
+            const restingHr = parseFloat(document.getElementById('resting-hr').value) || 0;
+            const hrRecovery1min = parseFloat(document.getElementById('hr-recovery-1min').value) || 0;
+            const hrv = parseFloat(document.getElementById('hrv').value) || 0;
+            
+            // 静息心率评分
+            let restingScore = 0;
+            if (restingHr >= 100) restingScore = 3;
+            else if (restingHr >= 80) restingScore = 2;
+            else if (restingHr >= 60) restingScore = 1;
+            
+            // 心率恢复评分
+            let recoveryScore = 0;
+            if (hrRecovery1min <= 12) recoveryScore = 3;
+            else if (hrRecovery1min <= 18) recoveryScore = 2;
+            else if (hrRecovery1min <= 25) recoveryScore = 1;
+            
+            // 心率变异性评分
+            let hrvScore = 0;
+            if (hrv <= 20) hrvScore = 3;
+            else if (hrv <= 40) hrvScore = 2;
+            else if (hrv <= 60) hrvScore = 1;
+            
+            const totalScore = restingScore + recoveryScore + hrvScore;
+            
+            let warningLevel, recommendation, icon;
+            if (totalScore >= 7) {
+                warningLevel = '红色预警';
+                recommendation = '立即就医，建议进行全面检查';
+                icon = '🔴';
+            } else if (totalScore >= 4) {
+                warningLevel = '黄色预警';
+                recommendation = '调整生活方式，建议增加监测频率';
+                icon = '🟡';
+            } else if (totalScore >= 1) {
+                warningLevel = '绿色预警';
+                recommendation = '继续保持，建议定期监测';
+                icon = '🟢';
+            } else {
+                warningLevel = '正常';
+                recommendation = '心率控制良好，继续保持健康生活方式';
+                icon = '✅';
+            }
+            
+            return {
+                warningType: '心率预警',
+                warningLevel: warningLevel,
+                totalScore: totalScore,
+                details: [
+                    `静息心率：${restingHr} bpm（评分：${restingScore}分）`,
+                    `心率恢复：${hrRecovery1min} bpm（评分：${recoveryScore}分）`,
+                    `心率变异性：${hrv} ms（评分：${hrvScore}分）`,
+                    `总分：${totalScore}分`
+                ],
+                recommendation: recommendation,
+                icon: icon,
+                evidenceSource: 'AHA 2025心血管指南'
+            };
+        }
+        
+        // 血脂预警计算
+        function calculateBloodLipidWarning() {
+            const ldlC = parseFloat(document.getElementById('ldl-c').value) || 0;
+            const hdlC = parseFloat(document.getElementById('hdl-c').value) || 0;
+            const tg = parseFloat(document.getElementById('tg').value) || 0;
+            
+            // LDL-C评分
+            let ldlScore = 0;
+            if (ldlC >= 4.9) ldlScore = 3;
+            else if (ldlC >= 3.4) ldlScore = 2;
+            else if (ldlC >= 2.6) ldlScore = 1;
+            
+            // HDL-C评分（反向）
+            let hdlScore = 0;
+            if (hdlC < 1.0) hdlScore = 3;
+            else if (hdlC < 1.3) hdlScore = 2;
+            else if (hdlC < 1.5) hdlScore = 1;
+            
+            // TG评分
+            let tgScore = 0;
+            if (tg >= 2.3) tgScore = 3;
+            else if (tg >= 1.7) tgScore = 2;
+            else if (tg >= 1.5) tgScore = 1;
+            
+            const totalScore = ldlScore + hdlScore + tgScore;
+            
+            let warningLevel, recommendation, icon;
+            if (totalScore >= 7) {
+                warningLevel = '红色预警';
+                recommendation = '立即就医，建议进行全面检查';
+                icon = '🔴';
+            } else if (totalScore >= 4) {
+                warningLevel = '黄色预警';
+                recommendation = '调整生活方式，建议增加监测频率';
+                icon = '🟡';
+            } else if (totalScore >= 1) {
+                warningLevel = '绿色预警';
+                recommendation = '继续保持，建议定期监测';
+                icon = '🟢';
+            } else {
+                warningLevel = '正常';
+                recommendation = '血脂控制良好，继续保持健康生活方式';
+                icon = '✅';
+            }
+            
+            return {
+                warningType: '血脂预警',
+                warningLevel: warningLevel,
+                totalScore: totalScore,
+                details: [
+                    `LDL-C：${ldlC} mmol/L（评分：${ldlScore}分）`,
+                    `HDL-C：${hdlC} mmol/L（评分：${hdlScore}分）`,
+                    `TG：${tg} mmol/L（评分：${tgScore}分）`,
+                    `总分：${totalScore}分`
+                ],
+                recommendation: recommendation,
+                icon: icon,
+                evidenceSource: '中国血脂管理指南2025'
+            };
+        }
+        
+        // 体重预警计算
+        function calculateBodyWeightWarning() {
+            const bmi = parseFloat(document.getElementById('bmi').value) || 0;
+            const waistCircumference = parseFloat(document.getElementById('waist-circumference').value) || 0;
+            const bodyFatPercentage = parseFloat(document.getElementById('body-fat-percentage').value) || 0;
+            
+            // BMI评分
+            let bmiScore = 0;
+            if (bmi >= 28.0) bmiScore = 3;
+            else if (bmi >= 24.0) bmiScore = 2;
+            else if (bmi >= 18.5) bmiScore = 1;
+            
+            // 腰围评分
+            let waistScore = 0;
+            if (waistCircumference >= 90) waistScore = 3;
+            else if (waistCircumference >= 85) waistScore = 2;
+            else if (waistCircumference >= 80) waistScore = 1;
+            
+            // 体脂率评分
+            let fatScore = 0;
+            if (bodyFatPercentage >= 30) fatScore = 3;
+            else if (bodyFatPercentage >= 25) fatScore = 2;
+            else if (bodyFatPercentage >= 20) fatScore = 1;
+            
+            const totalScore = bmiScore + waistScore + fatScore;
+            
+            let warningLevel, recommendation, icon;
+            if (totalScore >= 7) {
+                warningLevel = '红色预警';
+                recommendation = '立即就医，建议进行全面检查';
+                icon = '🔴';
+            } else if (totalScore >= 4) {
+                warningLevel = '黄色预警';
+                recommendation = '调整生活方式，建议增加监测频率';
+                icon = '🟡';
+            } else if (totalScore >= 1) {
+                warningLevel = '绿色预警';
+                recommendation = '继续保持，建议定期监测';
+                icon = '🟢';
+            } else {
+                warningLevel = '正常';
+                recommendation = '体重控制良好，继续保持健康生活方式';
+                icon = '✅';
+            }
+            
+            return {
+                warningType: '体重预警',
+                warningLevel: warningLevel,
+                totalScore: totalScore,
+                details: [
+                    `BMI：${bmi} kg/m²（评分：${bmiScore}分）`,
+                    `腰围：${waistCircumference} cm（评分：${waistScore}分）`,
+                    `体脂率：${bodyFatPercentage}%（评分：${fatScore}分）`,
+                    `总分：${totalScore}分`
+                ],
+                recommendation: recommendation,
+                icon: icon,
+                evidenceSource: '中国肥胖管理指南2025'
+            };
+        }
+        
+        // 显示结果
+        function displayResult(result) {
+            const resultSection = document.getElementById('result');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultDetails = document.getElementById('result-details');
+            
+            // 设置样式
+            resultSection.className = 'result-section';
+            if (result.warningLevel === '红色预警') {
+                resultSection.classList.add('red');
+            } else if (result.warningLevel === '黄色预警') {
+                resultSection.classList.add('yellow');
+            } else if (result.warningLevel === '绿色预警') {
+                resultSection.classList.add('green');
+            } else {
+                resultSection.classList.add('normal');
+            }
+            
+            // 设置内容
+            resultIcon.textContent = result.icon;
+            resultTitle.textContent = `${result.warningType}：${result.warningLevel}（总分${result.totalScore}分）`;
+            
+            // 构建详细内容
+            let detailsHtml = '';
+            result.details.forEach(detail => {
+                detailsHtml += `<div class="result-item"><strong>${detail}</strong></div>`;
+            });
+            detailsHtml += `<div class="result-item"><strong>建议：${result.recommendation}</strong></div>`;
+            detailsHtml += `<div class="result-item"><strong>循证来源：${result.evidenceSource}</strong></div>`;
+            
+            resultDetails.innerHTML = detailsHtml;
+            
+            // 显示结果
+            resultSection.style.display = 'block';
+        }
+        
+        // 计算标准差
+        function calculateStandardDeviation(arr) {
+            if (arr.length < 2) return 0;
+            
+            const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+            const squaredDiffs = arr.map(x => Math.pow(x - mean, 2));
+            const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (arr.length - 1);
+            
+            return Math.sqrt(variance);
+        }
+    </script>
+</body>
+</html>
